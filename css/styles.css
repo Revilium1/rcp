@@ -1,0 +1,98 @@
+/* Reset page */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  background: #fafafa;
+}
+
+/* Full-page chat layout */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Messages section */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: 15px;
+}
+
+/* Each message is a simple <p> */
+.messages p {
+  margin: 6px 0;
+  font-size: 16px;
+  color: #000;
+}
+
+/* Input area */
+#message-form {
+  display: flex;
+  border-top: 1px solid #ddd;
+  background: #f3f3f3;
+}
+
+#message-input {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  font-size: 16px;
+  background: white;
+}
+
+button {
+  width: 90px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #45a049;
+}
+/* Layout: side-by-side user list + chat panel */
+.chat-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar with online users */
+.user-list {
+  width: 200px;
+  background: #f0f0f0;
+  border-right: 1px solid #ccc;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.user-list h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.user-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-list li {
+  padding: 4px 0;
+  font-size: 15px;
+}
+.user-list {
+  order: 2;
+}
+
+.chat-container {
+  order: 1;
+  flex: 1;
+}
