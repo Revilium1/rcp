@@ -3,31 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RCP</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <title>Scaledrone Chat</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="room-display" style="padding: 10px; font-weight: bold; font-size: 18px;">
     Room: general
   </div>
-<div class="chat-layout">
-
-  <div class="user-list">
-    <h3>Online</h3>
-    <ul id="online-users"></ul>
+  <div class="chat-layout">
+  
+    <div class="user-list">
+      <h3>Online</h3>
+      <ul id="online-users"></ul>
+    </div>
+  
+    <div class="chat-container">
+      <div class="messages" id="messages"></div>
+  
+      <form id="message-form">
+        <input id="message-input" type="text" placeholder="Type your message..." autocomplete="off" required>
+        <button type="submit">Send</button>
+      </form>
+    </div>
   </div>
-
-  <div class="chat-container">
-    <div class="messages" id="messages"></div>
-
-    <form id="message-form">
-      <input id="message-input" type="text" placeholder="Type your message..." autocomplete="off" required>
-      <button type="submit">Send</button>
-    </form>
-  </div>
-
-</div>
   <script src="https://cdn.scaledrone.com/scaledrone.min.js"></script>
-  <script src="js/script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

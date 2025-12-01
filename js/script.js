@@ -61,16 +61,25 @@ connectDrone();
 
 function addMessageToDOM(message, member) {
   const p = document.createElement("p");
-  const info = member?.clientData;
-  const name = info?.name || "System";
-  const color = info?.color || "#000";
 
-  p.textContent = `${name}: ${message}`;
-  p.style.color = color;
+  // Determine name & color
+  let name = member?.clientData?.name || "Anon";
+  let color = member?.clientData?.color || "#000";
+
+  // If message is formatted HTML
+  if (typeof message === "object" && message.html) {
+    name = message.name || name;
+    color = message.color || color;
+    p.innerHTML = `<span style="color:${color};">${name}:</span> ${message.content}`;
+  } else {
+    p.textContent = `${name}: ${message}`;
+    p.style.color = color;
+  }
 
   messagesContainer.appendChild(p);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
 
 function renderMemberList() {
   usersList.innerHTML = "";
@@ -103,9 +112,10 @@ form.addEventListener("submit", e => {
   }
 
   drone.publish({
-    room: "observable-room",
+    room: "observable-" + currentRoomName,
     message: msg
   });
+
 
   input.value = "";
 });
@@ -140,6 +150,45 @@ function handleCommand(raw) {
   if (cmd === "/help") {
   showHelp();
   return;
+  }
+  if (cmd === "/me") {
+    if (!arg) return addSystemMessage("Usage: /me <action>");
+    sendAction(arg);
+    return;
+  }
+  if (cmd === "/clear") {
+    clearChat();
+    return;
+  }
+  if (cmd === "/whoami") {
+    whoAmI();
+    return;
+  }
+  if (cmd === "/shrug") {
+    drone.publish({ room: "observable-" + currentRoomName, message: "¯\\_(ツ)_/¯" });
+    return;
+  }
+  if (cmd === "/tableflip") {
+    drone.publish({ room: "observable-" + currentRoomName, message: "(╯°□°)╯︵ ┻━┻" });
+    return;
+  }
+  if (cmd === "/unflip") {
+    drone.publish({ room: "observable-" + currentRoomName, message: "┬─┬ ノ( ゜-゜ノ)" });
+    return;
+  }
+  if (cmd === "/roll") {
+    rollDice(arg);
+    return;
+  }
+  if (cmd === "/bold") {
+    if (!arg) return addSystemMessage("Usage: /bold <text>");
+    sendFormatted("bold", arg);
+    return;
+  }
+  if (cmd === "/italic") {
+    if (!arg) return addSystemMessage("Usage: /italic <text>");
+    sendFormatted("italic", arg);
+    return;
   }
   addSystemMessage(`Unknown command: ${cmd}`);
 }
@@ -229,10 +278,72 @@ function switchRoom(newRoom) {
 }
 
 function showHelp() {
-  addSystemMessage("Available commands:");
+  addSystemMessage("Commands:");
   addSystemMessage("/help — show this help menu");
   addSystemMessage("/name <name> — change your username");
-  addSystemMessage("/color <hex> — change your message color");
-  addSystemMessage("/room <room> — switch to a different room");
-  addSystemMessage("/lobby — return to the general room");
+  addSystemMessage("/color <hex> — change your color");
+  addSystemMessage("/room <room> — switch rooms");
+  addSystemMessage("/lobby — go to the general room");
+  addSystemMessage("/me <action> — perform an action");
+  addSystemMessage("/clear — clear your chat window");
+  addSystemMessage("/whoami — show your profile info");
+  addSystemMessage("/shrug — sends ¯\\_(ツ)_/¯");
+  addSystemMessage("/tableflip — sends (╯°□°)╯︵ ┻━┻");
+  addSystemMessage("/unflip — sends ┬─┬ ノ( ゜-゜ノ)");
+  addSystemMessage("/roll <sides> — roll a dice (default 6)");
+}
+
+function sendAction(action) {
+  const text = `*${myData.name}: ${action}*`;
+  drone.publish({
+    room: "observable-" + currentRoomName,
+    message: text
+  });
+}
+
+function clearChat() {
+  messagesContainer.innerHTML = "";
+  addSystemMessage("Chat cleared.");
+}
+
+function whoAmI() {
+  addSystemMessage(`You are "${myData.name}"`);
+  addSystemMessage(`Color: ${myData.color}`);
+  addSystemMessage(`Room: ${currentRoomName}`);
+}
+
+function rollDice(arg) {
+  let sides = parseInt(arg);
+  if (isNaN(sides) || sides < 2) sides = 6;
+
+  const result = Math.floor(Math.random() * sides) + 1;
+
+  const text = `${myData.name} rolled a ${result} (1–${sides})`;
+  drone.publish({
+    room: "observable-" + currentRoomName,
+    message: text
+  });
+}
+
+function sendFormatted(type, text) {
+  let formatted;
+
+  if (type === "bold") {
+    formatted = `<strong>${escapeHTML(text)}</strong>`;
+  } else if (type === "italic") {
+    formatted = `<em>${escapeHTML(text)}</em>`;
+  }
+
+  // publish + mark message as HTML
+  drone.publish({
+    room: "observable-" + currentRoomName,
+    message: { html: true, content: formatted, name: myData.name, color: myData.color }
+  });
+}
+
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
