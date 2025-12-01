@@ -28,7 +28,13 @@ function connectDrone() {
     if (err) return console.error(err);
 
     // Subscribe to the "observable-" + room name
-    room = drone.subscribe("observable-" + currentRoomName);
+    room = drone.subscribe("observable-" + currentRoomName, {
+      historyCount: 20
+    });
+    
+    room.on('history_message', msg => {
+      addMessageToDOM(msg.data, msg.member, msg.timestamp);
+    });
 
     // Update room display at top
     document.getElementById("room-display").textContent = "Room: " + currentRoomName;
