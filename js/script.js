@@ -3,7 +3,7 @@ const COLORS = ["#ff4d4d", "#4d79ff", "#33cc33", "#ff9933", "#cc33ff"];
 
 // Try to load saved username/color from localStorage
 let myData = {
-  name: localStorage.getItem("chatName") || "User-" + Math.floor(Math.random() * 1000),
+  name: localStorage.getItem("chatName") || "User-" + Math.floor(Math.random() * 1000000),
   color: localStorage.getItem("chatColor") || COLORS[Math.floor(Math.random() * COLORS.length)]
 };
 
@@ -133,9 +133,16 @@ function handleCommand(raw) {
     return;
   }
 
+  if (cmd === "/lobby") {
+    switchRoom("general"); // always goes to observable-general
+    return;
+  }
+  if (cmd === "/help") {
+  showHelp();
+  return;
+  }
   addSystemMessage(`Unknown command: ${cmd}`);
 }
-
 
 function reconnectWithNewData(changes) {
   addSystemMessage("Reconnecting...");
@@ -219,4 +226,13 @@ function switchRoom(newRoom) {
 
   // Update the room display
   document.getElementById("room-display").textContent = "Room: " + currentRoomName;
+}
+
+function showHelp() {
+  addSystemMessage("Available commands:");
+  addSystemMessage("/help — show this help menu");
+  addSystemMessage("/name <name> — change your username");
+  addSystemMessage("/color <hex> — change your message color");
+  addSystemMessage("/room <room> — switch to a different room");
+  addSystemMessage("/lobby — return to the general room");
 }
