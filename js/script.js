@@ -1,5 +1,9 @@
-const CLIENT_ID = "fqIXidsH6gWK4vD2";
+const CLIENT_ID = "wTGZVDt7XLorVg9c";
 const COLORS = ["#ff4d4d", "#4d79ff", "#33cc33", "#ff9933", "#cc33ff"];
+const USERS = [
+  { username: "Fredoka", color: "#a0f", password: "b2b42e2bca76b79cf40c8592fd06bdd846d263f6" },
+  { username: "Sparkpacket", color: "#0f0",   password: "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8" }
+];
 
 // Try to load saved username/color from localStorage
 let myData = {
@@ -11,7 +15,7 @@ let myData = {
 let drone = null;
 let currentRoomName = "general"; // default
 let room = null; // current room subscription
-
+let isLoggedIn = false;
 
 const messagesContainer = document.getElementById("messages");
 const usersList = document.getElementById("online-users");
@@ -21,49 +25,49 @@ const input = document.getElementById("message-input");
 
 let members = [];
 
-function connectDrone() {
+function connectDrone(skipHistory = false) {
   drone = new Scaledrone(CLIENT_ID, { data: myData });
 
-  drone.on('open', err => {
+  drone.on("open", err => {
     if (err) return console.error(err);
 
-    // Subscribe to the "observable-" + room name
     room = drone.subscribe("observable-" + currentRoomName, {
-      historyCount: 20
+      historyCount: skipHistory ? 0 : 20
     });
-    
-    room.on('history_message', msg => {
+
+    room.on("history_message", msg => {
       addMessageToDOM(msg.data, msg.member, msg.timestamp);
     });
 
-    // Update room display at top
-    document.getElementById("room-display").textContent = "Room: " + currentRoomName;
+    document.getElementById("room-display").textContent =
+      "Room: " + currentRoomName;
 
-    // Handle messages
-    room.on('message', event => {
+    room.on("message", event => {
       const { data, member } = event;
       addMessageToDOM(data, member);
     });
 
-    // Handle member list
-    room.on('members', m => {
+    room.on("members", m => {
       members = m;
       renderMemberList();
     });
 
-    room.on('member_join', member => {
+    room.on("member_join", member => {
       members.push(member);
       renderMemberList();
     });
 
-    room.on('member_leave', ({ id }) => {
+    room.on("member_leave", ({ id }) => {
       members = members.filter(m => m.id !== id);
       renderMemberList();
     });
+
+    // Render guest immediately if needed
+    renderMemberList();
   });
 }
 
-connectDrone();
+connectDrone(false);
 
 function addMessageToDOM(message, member) {
   const p = document.createElement("p");
@@ -86,21 +90,34 @@ function addMessageToDOM(message, member) {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-
 function renderMemberList() {
+  if (!usersList) return;
+
   usersList.innerHTML = "";
 
-  members.forEach(member => {
-    const li = document.createElement("li");
-    const info = member.clientData;
-    li.textContent = info?.name || "Anon";
+  // If no members from server, show a guest entry
+  const listToRender = members.length > 0
+    ? members
+    : [{ id: "guest-" + myData.name, clientData: myData }];
 
-    // If this member is the current user, make the name red
-    if (member.id === drone.clientId) {
-      li.style.color = "red";
-    } else {
-      li.style.color = info?.color || "#000";
+  listToRender.forEach(member => {
+    const li = document.createElement("li");
+    const info = member.clientData || {};
+
+    let name = info.name || "Anon";
+
+    const isSelf =
+      (drone?.clientId && member.id === drone.clientId) ||
+      member.id.startsWith("guest-");
+
+    if (isSelf) {
+      name += isLoggedIn ? " √" : " (guest)";
     }
+
+    li.textContent = name;
+
+    // Color red for self, otherwise member color
+    li.style.color = info.color || (isSelf ? "red" : "#000");
 
     usersList.appendChild(li);
   });
@@ -196,7 +213,36 @@ function handleCommand(raw) {
     sendFormatted("italic", arg);
     return;
   }
+  if (cmd === "/login") {
+  const [username, password] = arg.split(" ");
+    if (!username || !password) {
+      addSystemMessage("Usage: /login <username> <password>");
+      return;
+    }
+    loginUser(username, password);
+    return;
+  }
   addSystemMessage(`Unknown command: ${cmd}`);
+}
+
+async function loginUser(username, password) {
+  const hashed = await sha1(password);
+  const match = USERS.find(u => u.username === username && u.password === hashed);
+  if (!match) return addSystemMessage("Login failed.");
+
+  isLoggedIn = true;
+  loggedInUser = username;
+  reconnectWithNewData({ 
+    name: username, 
+    color: match.color || myData.color 
+  });
+  addSystemMessage(`Logged in as ${username} √`);
+}
+
+async function sha1(message) {
+  const buffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,"0")).join("");
 }
 
 function reconnectWithNewData(changes) {
@@ -217,7 +263,7 @@ function reconnectWithNewData(changes) {
   renderMemberList();
 
   // Reconnect with updated data
-  connectDrone();
+  connectDrone(true);
 
   // Show confirmation after a short delay
   setTimeout(() => {
