@@ -1,4 +1,4 @@
-const CLIENT_ID = "wTGZVDt7XLorVg9c";
+const CLIENT_ID = "trE5KNh3r4nDXfSv";
 const COLORS = ["#ff4d4d", "#4d79ff", "#33cc33", "#ff9933", "#cc33ff"];
 const USERS = [
   { username: "Fredoka", color: "#a0f", password: "b2b42e2bca76b79cf40c8592fd06bdd846d263f6" },
